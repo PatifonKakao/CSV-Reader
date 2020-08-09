@@ -95,6 +95,7 @@ void CSVReader::createOpersMap()
 
 void CSVReader::setCalcData()
 {
+	calcData = "";
 	calcData += colsTop + "\n";
 	for (auto j = 0; j < table.size(); ++j)
 	{
