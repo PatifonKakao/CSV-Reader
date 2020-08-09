@@ -30,7 +30,15 @@ cd bin
 
 ### Windows (MinGW)
 
+```shell
+mingw.bat
+cd output_64
+mingw32-make
+cd bin
+csvreader.exe
+```
 
 ### Windows (Visual Studio)
-* Edit config_folder_and_run_cmake.bat
-* Run config_folder_and_run_cmake.bat
+* Edit vs.bat
+* Run vs.bat
+* Set as StartUp Project csvreader
