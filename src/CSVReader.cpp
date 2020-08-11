@@ -1,6 +1,6 @@
 #include "CSVReader.h"
 
-CSVReader::CSVReader(const std::string & fileName)
+CSVReader::CSVReader(const std::string & fileName) 
 {
 	loadFile(fileName);
 	buildTable();
@@ -19,7 +19,7 @@ void CSVReader::print()
 void CSVReader::loadFile(const std::string &fileName)
 {
 	std::ifstream file(fileName);
-
+	initialData = "";
 	std::copy(
 		std::istreambuf_iterator<char>(file),std::istreambuf_iterator<char>(), std::back_inserter(initialData)
 	);
@@ -37,7 +37,7 @@ void CSVReader::buildTable()
 	for (auto i = 0; i < countCols; ++i)
 	{
 		std::getline(strStrm, currentTopCell, ',');
-		col.insert(std::make_pair(currentTopCell, i));
+		cols.insert(std::make_pair(currentTopCell, i));
 	}
 
 	CellFactory cellFactory;
@@ -47,13 +47,12 @@ void CSVReader::buildTable()
 	std::string currentStr;
 	std::vector<std::unique_ptr<ICell>> currentLine;
 	
-
 	while (std::getline(ssMain, currentStr, '\n'))
 	{
 		std::stringstream strStrm(currentStr);
 		std::string strCell;
 		std::getline(strStrm, strCell, ',');
-		row.insert(std::make_pair(std::stoi(strCell), i++));
+		rows.insert(std::make_pair(std::stoi(strCell), i++));
 		rowsRigth.push_back(strCell);
 
 		auto k = 0;
@@ -61,7 +60,7 @@ void CSVReader::buildTable()
 
 		while (std::getline(strStrm, strCell, ','))
 		{
-			if (strCell[0] == '=') //if (strCell.find('=') != std::string::npos) 
+			if (strCell[0] == '=') 
 			{
 				currentLine[k++] = std::move(cellFactory.createCell(strCell, this));
 			}
@@ -75,8 +74,6 @@ void CSVReader::buildTable()
 		}
 		table.push_back(std::move(currentLine));
 	}
-
-	createOpersMap();
 }
 
 std::string CSVReader::getCalcData()
@@ -85,13 +82,13 @@ std::string CSVReader::getCalcData()
 	return calcData;
 }
 
-void CSVReader::createOpersMap()
-{
-	opers.insert(std::make_pair('+', [](long a, long b) {return a + b; }));
-	opers.insert(std::make_pair('-', [](long a, long b) {return a - b; }));
-	opers.insert(std::make_pair('*', [](long a, long b) {return a * b; }));
-	opers.insert(std::make_pair('/', [](long a, long b) {if (b != 0) return a / b; }));
-}
+std::map<const char, std::function<long(long, long)>> CSVReader::OperationCell::opers
+({
+	std::pair<const char, std::function<long(long, long)>>('+', [](long a, long b) {return a + b; }),
+	std::pair<const char, std::function<long(long, long)>>('-', [](long a, long b) {return a - b; }),
+	std::pair<const char, std::function<long(long, long)>>('*', [](long a, long b) {return a * b; }),
+	std::pair<const char, std::function<long(long, long)>>('/', [](long a, long b) {if (b!=0) return a / b; })
+	});
 
 void CSVReader::setCalcData()
 {
@@ -128,12 +125,13 @@ long CSVReader::OperationCell::getValue()
 		{
 			throw std::runtime_error("The table is not computable");
 		}
-		std::function<long(long, long)> f = csPtr->opers[oper];
+
+		std::function<long(long, long)> f = opers.at(oper);
 		if (col1 != "" && col2 != "")
 		{
 			value = f(
-				csPtr->table[csPtr->row[row1]][csPtr->col[col1]]->getValue(),
-				csPtr->table[csPtr->row[row2]][csPtr->col[col2]]->getValue());
+				csPtr->table[csPtr->rows[row1]][csPtr->cols[col1]]->getValue(),
+				csPtr->table[csPtr->rows[row2]][csPtr->cols[col2]]->getValue());
 			isCalc = true;
 			--countInput;
 			return value;
@@ -143,7 +141,7 @@ long CSVReader::OperationCell::getValue()
 			if (col1 != "" && col2 == "")
 			{
 				value = f(
-					csPtr->table[csPtr->row[row1]][csPtr->col[col1]]->getValue(),
+					csPtr->table[csPtr->rows[row1]][csPtr->cols[col1]]->getValue(),
 					row2);
 				isCalc = true;
 				--countInput;
@@ -155,7 +153,7 @@ long CSVReader::OperationCell::getValue()
 				{
 					value = f(
 						row1,
-						csPtr->table[csPtr->row[row2]][csPtr->col[col2]]->getValue());
+						csPtr->table[csPtr->rows[row2]][csPtr->cols[col2]]->getValue());
 					isCalc = true;
 					--countInput;
 					return value;
