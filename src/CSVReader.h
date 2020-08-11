@@ -21,7 +21,7 @@
 
 
 
-class CSVReader 
+class CSVReader
 {
 public:
 
@@ -44,19 +44,15 @@ private:
 	std::string calcData;
 
 	std::deque<std::vector<std::unique_ptr<ICell>>> table;
-	std::map<long, long> row;
-	std::map<std::string, long> col;
+	std::map<long, long> rows;
+	std::map<std::string, long> cols;
 
 	size_t countCols;
 	std::string colsTop;
 	std::deque<std::string> rowsRigth;
 
-	std::map<char, std::function<long(long, long)>> opers;
-	void createOpersMap();
-
 	void setCalcData();
 
-	
 	class ICell
 	{
 	public:
@@ -111,6 +107,8 @@ private:
 		int countInput;
 
 		CSVReader * csPtr;
+
+		static std::map<const char, std::function<long(long, long)>> opers;
 
 		void parse(const std::string & cellStr);
 
